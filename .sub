@@ -93,6 +93,7 @@ li{font-size:1.1rem;font-weight:600}
 <p class="k" style="margin:14px 0 0;color:var(--sub)">당첨 번호 (중복 없음)</p>
 <ol id="wins"></ol>
 <button class="go ghost" id="reset" style="margin-top:16px">처음부터 다시</button>
+<button class="go ghost" id="snd" style="margin-top:10px">🔊 효과음 켜짐</button>
 </section>
 </main>
 
@@ -126,8 +127,8 @@ var PLACES=[
 var $=function(i){return document.getElementById(i)};
 var sel=$("team");
 TEAMS.forEach(function(t,i){var o=document.createElement("option");o.value=i;o.textContent=t.name;sel.appendChild(o)});
-function fill(id,arr,label){var s=$(id);arr.forEach(function(x,i){var o=document.createElement("option");o.value=i;
-o.textContent=(i+1)+". "+x.title;s.appendChild(o)})}
+function fill(id,arr,label){var s=$(id);arr.forEach(function(x,i){var o=document.createElement("option");o.value=i;o.textContent=(i+1)+". "+x.title;s.appendChild(o)})}
+fill("posesel",POSES,"포즈");fill("placesel",PLACES,"장소");
 
 function show(which){
  ["teamsec","pose","draw"].forEach(function(id){var k=id==="teamsec"?"team":id;$(id).hidden=(k!==which);$("t-"+k).setAttribute("aria-selected",k===which)});
@@ -187,6 +188,21 @@ function render(){
 var cv=$("cv"),cx=cv.getContext("2d"),W=320,C=160,R=148,dpr=window.devicePixelRatio||1;
 cv.width=W*dpr;cv.height=W*dpr;cx.scale(dpr,dpr);
 var balls=[],mode="idle",mixT=0,pickBall=null,pickT=0;
+var AC=null,SND=true;
+function ac(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume()}catch(e){}return AC}
+function tone(f,t,d,type,v){
+ if(!SND)return;
+ var a=ac();if(!a)return;
+ var o=a.createOscillator(),g=a.createGain(),s=a.currentTime+t;
+ o.type=type||"sine";o.frequency.value=f;
+ g.gain.setValueAtTime(v||0.15,s);g.gain.exponentialRampToValueAtTime(0.001,s+d);
+ o.connect(g);g.connect(a.destination);o.start(s);o.stop(s+d+0.05);
+}
+function fan(big){
+ var n=big?[523,659,784,1047,784,1047,1319]:[523,659,784,1047];
+ n.forEach(function(f,i){tone(f,i*0.13,big?0.3:0.22,"triangle",0.2)});
+}
+$("snd").onclick=function(){SND=!SND;this.textContent=SND?"🔊 효과음 켜짐":"🔇 효과음 꺼짐"};
 function build(){
  var max=Math.min(60,Math.max(1,parseInt($("max").value,10)||44));
  balls=[];
@@ -240,17 +256,19 @@ function paint(){
 function startPick(){
  var b=balls[Math.floor(Math.random()*balls.length)];
  b.sx=b.x;b.sy=b.y;b.done=false;pickBall=b;pickT=0;mode="pick";
+ tone(400,0,0.1,"sine",0.15);tone(600,0.1,0.15,"sine",0.15);
 }
 function finish(){
  var rk=$("ord").value==="down"?TOTAL-won.length:won.length+1;
  won.push(pickBall.n);ranks.push(rk);$("ord").disabled=true;
  $("num").textContent=rk+"등 · "+pickBall.n+"번";
+ fan(rk===1);
  render();busy=false;mode="idle";
 }
 function loop(){
  requestAnimationFrame(loop);
  if($("draw").hidden)return;
- if(mode==="mix"){mixT--;if(mixT<=0)startPick()}
+ if(mode==="mix"){mixT--;if(mixT%4===0)tone(200+Math.random()*700,0,0.04,"triangle",0.07);if(mixT<=0)startPick()}
  if(mode==="pick"){
   pickT++;
   var k=Math.min(1,pickT/50),e=1-Math.pow(1-k,3);
@@ -270,7 +288,7 @@ $("spin").onclick=function(){
  pickBall=null;build();
  if(!balls.length){$("derr").textContent="모든 번호가 추첨되었어요.";return}
  $("derr").textContent="";$("num").textContent=($("ord").value==="down"?TOTAL-won.length:won.length+1)+"등 추첨 중…";
- busy=true;mode="mix";mixT=170;
+ ac();busy=true;mode="mix";mixT=170;
 };
 $("reset").onclick=function(){if(busy)return;won=[];ranks=[];$("ord").disabled=false;pickBall=null;render();$("num").textContent="?";$("derr").textContent="";build()};
 $("max").onchange=function(){if(!busy){pickBall=null;build()}};
