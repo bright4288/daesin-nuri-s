@@ -76,6 +76,7 @@ li{font-size:1.1rem;font-weight:600}
 <h2 id="rteam"></h2>
 <p class="k">장소</p><p class="v" id="rplace"></p>
 <p class="k">포즈</p><p class="v" id="rpose"></p>
+<img id="rimg" alt="" style="display:none;width:100%;border-radius:12px;margin-top:14px">
 <p class="note">포즈 뒤 QR로 인증 사진을 확인하세요.</p>
 </div>
 </section>
@@ -107,12 +108,12 @@ var TEAMS=[
 ];
 /* 돌림판 포즈 6개: 번호 순서대로 */
 var POSES=[
-{title:"출동응원단",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
-{title:"사랑의 꽃 피우기",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
-{title:"인간피라미드",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
-{title:"요염한 나 오때",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
-{title:"날아라 인간도미노",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
-{title:"우리 함께 빛나",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."}
+{title:"출동응원단",img:"pose1.jpg",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
+{title:"사랑의 꽃 피우기",img:"pose2.jpg",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
+{title:"인간피라미드",img:"pose3.jpg",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
+{title:"요염한 나 오때",img:"pose4.jpg",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
+{title:"날아라 인간도미노",img:"pose5.jpg",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."},
+{title:"우리 함께 빛나",img:"pose6.jpg",desc:"예시 포즈를 최대한 비슷하게 재현해 팀원 전원이 1장 촬영하세요."}
 ];
 /* 돌림판 장소 3개: 번호 순서대로 */
 var PLACES=[
@@ -135,7 +136,9 @@ function show(which){
 $("t-team").onclick=function(){show("team")};
 $("t-pose").onclick=function(){show("pose")};
 $("t-draw").onclick=function(){show("draw")};
-if(location.hash==="#draw")show("draw");else if(location.hash==="#pose")show("pose");
+var hm=location.hash.match(/^#p([1-6])$/);
+if(hm){show("pose");$("posesel").value=String(parseInt(hm[1],10)-1)}
+else if(location.hash==="#draw")show("draw");else if(location.hash==="#pose")show("pose");
 
 function check(){
  var t=TEAMS[sel.value];
@@ -148,6 +151,9 @@ function check(){
  var pl=PLACES[$("placesel").value],po=POSES[$("posesel").value];
  $("rplace").textContent=pl.title+" — "+pl.desc;
  $("rpose").textContent=po.title+" — "+po.desc;
+ var im=$("rimg");
+ im.onerror=function(){im.style.display="none"};
+ im.style.display="block";im.alt=po.title+" 예시 사진";im.src=po.img;
  $("res").hidden=false;
 }
 $("check").onclick=check;
